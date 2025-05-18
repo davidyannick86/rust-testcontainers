@@ -100,8 +100,6 @@ mod tests {
 
         match conn_result {
             Ok((client, connection)) => {
-                // The connection object performs the actual communication with the database,
-                // so spawn it off to run on its own
                 tokio::spawn(async move {
                     if let Err(e) = connection.await {
                         eprintln!("Connection error: {}", e);
@@ -127,9 +125,7 @@ mod tests {
 
     #[fixture]
     fn test_container() -> impl Future<Output = ContainerAsync<GenericImage>> + Send {
-        // Changed: not async, returns impl Future
         async {
-            // Body wrapped in async block
             GenericImage::new("postgres", "latest")
                 .with_exposed_port(5432.tcp())
                 .with_wait_for(WaitFor::message_on_stderr(
@@ -161,7 +157,6 @@ mod tests {
 
         tokio::time::sleep(Duration::from_millis(200)).await; // Increased delay
 
-        // Fix: remove the || from async move || and join the task to ensure test waits for it
         let task = tokio::spawn(async move {
             let pool = sqlx::PgPool::connect(&conn_string).await.unwrap();
             let row: (i32,) = sqlx::query_as("SELECT 1").fetch_one(&pool).await.unwrap();
@@ -190,7 +185,6 @@ mod tests {
 
         tokio::time::sleep(Duration::from_millis(200)).await; // Increased delay
 
-        // Fix: remove the || from async move || and join the task to ensure test waits for it
         let task = tokio::spawn(async move {
             let pool = sqlx::PgPool::connect(&conn_string).await.unwrap();
             let row: (i32,) = sqlx::query_as("SELECT 1").fetch_one(&pool).await.unwrap();
